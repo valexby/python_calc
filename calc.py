@@ -2,10 +2,66 @@
 
 import sys, pdb
 
-ops_list = ['+', '-', '*', '/', '**', '//', 'log', 'abs', '(', ')']
+ops_list = {'*':1, '/':1, '//':1, '%':1,
+        '--':-1, '(':-1, ')':-1,
+        'log':0, 'abs':0,
+        '+':2, '-':2,  '**':3}
+
+class Number():
+    def __init__(self, number):
+        self.__number__ = number
+
+    def interpret(self):
+        return self.__number__
+
+class Plus():
+    def __init__(self, left, right):
+        self.__left__ = left
+        self.__right__ = right
+
+    def interpret(self):
+        return self.__left__.interpret() + self.__right__.interpret()
+
+class Minus(): 
+    def __init__(self, left, right):
+        self.__left__ = left
+        self.__right__ = right
+
+    def interpret(self):
+        return self.__left__.interpret() - self.__right__.interpret()
+
+class Stack():
+    def __init__(self):
+        self.__data__ = []
+
+    def push(self, nooby):
+        self.__data__.append(nooby)
+
+    def pop(self):
+        if len(self.__data__) == 0:
+            return None
+        head = self.__data__[-1]
+        self.__data__ = self.__data__[:-1]
+        return head
+
+class Evaluator():
+    def __init__(self, expression):
+        stack = Stack()
+        for token in expression:
+            if token == '+':
+                sub_expression = Plus(stack.pop(), stack.pop())
+            elif token == '-':
+                sub_expression = Minus(stack.pop(), stack.pop())
+            else:
+                sub_expression = Number(token)
+            stack.push(sub_expression)
+        self.__tree__ = stack.pop()
+
+    def interpret(self):
+        return self.__tree__.interpret()
 
 def main():
-    polish = make_polish('(1+2)/3')
+    polish = make_polish('1+2-3')
     print(polish)
     [res] = execute_polish(polish)
     print(res)
@@ -26,21 +82,6 @@ def find_operator(source):
 def delete_spaces(source):
     return "".join(source.split(' '))
     
-def delete_double_minuses(source):
-    ls = source.split('-')
-    res = ls[0]
-    ls = ls[1:]
-    while (len(ls) > 1):
-        if (ls[0] == ''):
-            res += '+' + ls[1]
-            ls = ls[2:]
-        else:
-            res += '-' + ls[0]
-            ls = ls[1:]
-    if (len(ls) == 1):
-        res += '-' + ls[0]
-    return res
-
 #splits string expression on math signs
 def make_machine_handy(source):
     i = 0
@@ -57,54 +98,12 @@ def make_machine_handy(source):
             i += shift
             continue
         op_pos = i + find_operator(source[i:])
-        res.append(source[i:op_pos])
+        if source[i:op_pos] == '--':
+            res.append('+')
+        else:
+            res.append(source[i:op_pos])
         i = op_pos
     return res
-
-def make_polish(expr):
-    stack = "" 
-    result = [] 
-    while (expr != ""):
-        pos = get_numb_pos(expr)
-        if pos != 0:
-            result.append(int(expr[: pos]))
-            expr = expr[pos :]
-        elif expr[0] == ')':
-            while stack[-1:] != '(' and stack != "":
-                result.append(stack[-1:])
-                stack = stack[:-1]
-            stack = stack[:-1]
-            expr = expr[1:]
-        else:
-            stack += expr[0]
-            expr = expr[1:]
-        print("-"*20, "\nexpr: ",  expr, "\nstack: ", stack, "\nresult: ", result)
-    result.extend(stack[::-1])        
-    return result
-
-def execute(a, b, operator):
-    if operator == '+':
-        return a + b
-    elif operator == '-':
-        return a - b
-    elif operator == '*':
-        return a * b
-    elif operator == '/':
-        return a / b
-
-def execute_polish(expr):
-    stack = []
-    for i in expr:
-        if isinstance(i, int):
-            print("-"*20, i, "\nstack: ", stack)
-            stack.append(i)
-        else:
-            print("-"*20, i, "\nstack: ", stack)
-            a = stack[-2]
-            b = stack[-1]
-            stack = stack[:-2]
-            stack.append(execute(a, b, i))
-    return stack
 
 if __name__ == '__main__':
     sys.exit(main())
