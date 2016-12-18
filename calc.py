@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-import sys
+import sys, pdb
 
-operators_list = ['+', '-', '*', '/', 'log']
+ops_list = ['+', '-', '*', '/', '**', '//', 'log', 'abs', '(', ')']
 
 def main():
     polish = make_polish('(1+2)/3')
@@ -17,10 +17,15 @@ def get_numb_pos(string):
         else: break
     return out
 
-def cut_enrty(source):
-    if (source[:3] == 'log' or source[:3] == "abs"): 
-        return 3
+def find_operator(source):
+    for i in range(3, 0, -1):
+        if source[:i] in ops_list:
+            return i
+    return 1
 
+def delete_spaces(source):
+    return "".join(source.split(' '))
+    
 def delete_double_minuses(source):
     ls = source.split('-')
     res = ls[0]
@@ -41,22 +46,19 @@ def make_machine_handy(source):
     i = 0
     res = []
     while (i < len(source)):
-        #make negatives machine like: from '-3' to '(0 - 3)'
+        #make negatives machine-like: from '-3' to '(0 - 3)'
         if source[i] == '-' and (len(res) == 0 or (res[-1] != ')' and not isinstance(res[-1], (int, float)))):
             res.extend([0, source[i]])
             i += 1
-            continue
-        if (source[i] == '*' or source[i] == '/') and res[-1] == source[i]:
-            res[-1] = source[i]*2
-            i+=1
             continue
         if ('0' < source[i] < '9'):
             shift = get_numb_pos(source[i:])
             res.append(int(source[i:shift + i]))
             i += shift
             continue
-        res.append(source[i])
-        i += 1
+        op_pos = i + find_operator(source[i:])
+        res.append(source[i:op_pos])
+        i = op_pos
     return res
 
 def make_polish(expr):
