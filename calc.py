@@ -2,11 +2,6 @@
 
 import sys, pdb
 
-ops_list = {'*':1, '/':1, '//':1, '%':1,
-        '--':-1, '(':-1, ')':-1,
-        'log':0, 'abs':0,
-        '+':2, '-':2,  '**':3}
-
 class Number():
     def __init__(self, number):
         self.__number__ = number
@@ -21,6 +16,14 @@ class Plus():
 
     def interpret(self):
         return self.__left__.interpret() + self.__right__.interpret()
+
+class Mul():
+    def __init__(self, left, right):
+        self.__left__ = left
+        self.__right__ = right
+
+    def interpret(self):
+        return self.__left__.interpret() * self.__right__.interpret()
 
 class Minus(): 
     def __init__(self, left, right):
@@ -44,21 +47,18 @@ class Stack():
         self.__data__ = self.__data__[:-1]
         return head
 
-class Evaluator():
-    def __init__(self, expression):
-        stack = Stack()
-        for token in expression:
-            if token == '+':
-                sub_expression = Plus(stack.pop(), stack.pop())
-            elif token == '-':
-                sub_expression = Minus(stack.pop(), stack.pop())
-            else:
-                sub_expression = Number(token)
-            stack.push(sub_expression)
-        self.__tree__ = stack.pop()
+    def get(self):
+        if len(self.__data__) == 0:
+            return None
+        return self.__data__[-1]
 
-    def interpret(self):
-        return self.__tree__.interpret()
+    def is_empty(self):
+        return self.__data__ == []
+
+ops_list = {'*':(3, Mul), '/':3, '//':3, '%':3,
+        '--':-1, '(':(0, '('), ')':(10, ')'),
+        'log':0, 'abs':0,
+        '+':(2, Plus), '-':(2, Minus),  '**':1}
 
 def main():
     polish = make_polish('1+2-3')
@@ -104,6 +104,35 @@ def make_machine_handy(source):
             res.append(source[i:op_pos])
         i = op_pos
     return res
+
+def make_expression(expr_stack, op_stack):
+    right = expr_stack.pop()
+    left = expr_stack.pop()
+    op_class = op_stack.pop()[1]
+    expr_stack.push(op_class(left, right))
+    return expr_stack
+
+
+def make_polish(source):
+    op_stack = Stack()
+    expr_stack = Stack()
+    for token in source:
+        if isinstance(token, int):
+            expr_stack.push(Number(token))
+        elif token == ')':
+            while op_stack.get()[1] != '(':
+                expr_stack = make_expression(expr_stack, op_stack)
+            op_stack.pop()
+        elif token == '(' or op_stack.is_empty() or op_stack.get()[0] <= ops_list[token][0]:
+            op_stack.push(ops_list[token])
+        else:
+            cur_op = ops_list[token]
+            while (cur_op[0] < op_stack.get()[0]):
+                expr_stack = make_expression(expr_stack, op_stack)
+            op_stack.push(cur_op)
+    while not op_stack.is_empty():
+        expr_stack = make_expression(expr_stack, op_stack)
+    return expr_stack.pop()
 
 if __name__ == '__main__':
     sys.exit(main())
