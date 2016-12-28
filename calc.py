@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, pdb
+import sys, pdb, unittest
 
 class Number():
 
@@ -14,7 +14,8 @@ class MathFunction():
 
     def __init__(self, argument):
         self.__argument__ = argument
-
+    
+    @staticmethod
     def is_binary():
         return False
 
@@ -24,6 +25,7 @@ class BinaryOperator():
         self.__left__ = left
         self.__right__ = right
 
+    @staticmethod
     def is_binary():
         return True
 
@@ -70,16 +72,18 @@ class Stack():
     def is_empty(self):
         return self.__data__ == []
 
+    def lenght(self):
+        return len(self.__data__)
+
+class TestCalc(unittest.TestCase):
+
+    def test_not_explicit_multiply(self):
+        self.assertEqual(calc("(3)(4)"), 12)
+
 ops_list = {'*':(3, Mul), '/':3, '//':3, '%':3,
         '--':-1, '(':(0, '('), ')':(10, ')'),
         'log':0, 'abs':(0, Absolute),
         '+':(2, Plus), '-':(2, Minus),  '**':1}
-
-def main():
-    polish = make_polish('1+2-3')
-    print(polish)
-    [res] = execute_polish(polish)
-    print(res)
 
 def get_numb_pos(string):
     out = 0
@@ -97,13 +101,17 @@ def find_operator(source):
 def delete_spaces(source):
     return "".join(source.split(' '))
     
-#splits string expression on math signs
 def make_machine_handy(source):
+    """
+
+    Split string math expression. Substitude negatives like '-3' on '(0 - 3)'.
+
+    """
     i = 0
     res = []
     while (i < len(source)):
-        #make negatives machine-like: from '-3' to '(0 - 3)'
         if source[i] == '-' and (len(res) == 0 or (res[-1] != ')' and not isinstance(res[-1], (int, float)))):
+            # Make negatives machine-like: from '-3' to '(0 - 3)'.
             res.extend([0, source[i]])
             i += 1
             continue
@@ -127,7 +135,12 @@ def make_expression(expr_stack, op_stack):
     Swaps arguments for binary operators.
 
     """
-    op_class = op_stack.pop()[1]
+    if op_stack.is_empty():
+        # If we have two number without operand betwen them,  
+        # we should use multiply. Like (3+1)(4+2)  
+        op_class = Mul
+    else:
+        op_class = op_stack.pop()[1]
     if op_class.is_binary():
         right = expr_stack.pop()
         left = expr_stack.pop()
@@ -156,9 +169,15 @@ def make_polish(source):
     expr_stack = Stack()
     for token in source:
         handle_token(expr_stack, op_stack, token)
-    while not op_stack.is_empty():
+    while expr_stack.lenght() != 1:
         make_expression(expr_stack, op_stack)
     return expr_stack.pop()
 
+def calc(soucre):
+    tokens = make_machine_handy(soucre)
+    expression = make_polish(tokens)
+    result = expression.interpret()
+    return result
+
 if __name__ == '__main__':
-    sys.exit(main())
+    unittest.main()
