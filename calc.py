@@ -80,17 +80,30 @@ class TestCalc(unittest.TestCase):
     def test_not_explicit_multiply(self):
         self.assertEqual(calc("(3)(4)"), 12)
 
+    def test_floats(self):
+        self.assertEqual(calc("0.3 + 4"), 4.3)
+
+    def test_not_explicit_floats(self):
+        self.assertEqual(calc(".3+.4"), 0.7)
+
 ops_list = {'*':(3, Mul), '/':3, '//':3, '%':3,
         '--':-1, '(':(0, '('), ')':(10, ')'),
         'log':0, 'abs':(0, Absolute),
         '+':(2, Plus), '-':(2, Minus),  '**':1}
 
-def get_numb_pos(string):
-    out = 0
-    for i in string:
-        if ('0' <= i <= '9'): out += 1
-        else: break
-    return out
+def get_numb(source):
+    length = 0
+    for i in source:
+        if '0' <= i <= '9' or i == '.': 
+            length += 1
+        else: 
+            break
+    dummy = source[:length]
+    if '.' in dummy:
+        num = float(dummy)
+    else:
+        num = int(dummy)
+    return (num, length)
 
 def find_operator(source):
     for i in range(3, 0, -1):
@@ -109,15 +122,16 @@ def make_machine_handy(source):
     """
     i = 0
     res = []
+    source = delete_spaces(source)
     while (i < len(source)):
         if source[i] == '-' and (len(res) == 0 or (res[-1] != ')' and not isinstance(res[-1], (int, float)))):
             # Make negatives machine-like: from '-3' to '(0 - 3)'.
             res.extend([0, source[i]])
             i += 1
             continue
-        if ('0' < source[i] < '9'):
-            shift = get_numb_pos(source[i:])
-            res.append(int(source[i:shift + i]))
+        if ('0' <= source[i] <= '9' or source[i] == '.'):
+            (num, shift) = get_numb(source[i:])
+            res.append(num)
             i += shift
             continue
         op_pos = i + find_operator(source[i:])
@@ -151,7 +165,7 @@ def make_expression(expr_stack, op_stack):
 
 def handle_token(expr_stack, op_stack, token):
     cur_operator = ops_list.get(token)
-    if isinstance(token, int):
+    if isinstance(token, (int, float)):
         expr_stack.push(Number(token))
     elif token == ')':
         while op_stack.get()[1] != '(':
