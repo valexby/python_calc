@@ -3,37 +3,52 @@
 import sys, pdb
 
 class Number():
+
     def __init__(self, number):
         self.__number__ = number
 
     def interpret(self):
         return self.__number__
 
-class Plus():
+class MathFunction():
+
+    def __init__(self, argument):
+        self.__argument__ = argument
+
+    def is_binary():
+        return False
+
+class BinaryOperator():
+
     def __init__(self, left, right):
         self.__left__ = left
         self.__right__ = right
+
+    def is_binary():
+        return True
+
+class Plus(BinaryOperator):
 
     def interpret(self):
         return self.__left__.interpret() + self.__right__.interpret()
 
-class Mul():
-    def __init__(self, left, right):
-        self.__left__ = left
-        self.__right__ = right
+class Mul(BinaryOperator):
 
     def interpret(self):
         return self.__left__.interpret() * self.__right__.interpret()
 
-class Minus(): 
-    def __init__(self, left, right):
-        self.__left__ = left
-        self.__right__ = right
+class Minus(BinaryOperator):
 
     def interpret(self):
         return self.__left__.interpret() - self.__right__.interpret()
 
+class Absolute(MathFunction):
+
+    def interpret(self):
+        return abs(self.__argument__.interpret())
+
 class Stack():
+
     def __init__(self):
         self.__data__ = []
 
@@ -57,7 +72,7 @@ class Stack():
 
 ops_list = {'*':(3, Mul), '/':3, '//':3, '%':3,
         '--':-1, '(':(0, '('), ')':(10, ')'),
-        'log':0, 'abs':0,
+        'log':0, 'abs':(0, Absolute),
         '+':(2, Plus), '-':(2, Minus),  '**':1}
 
 def main():
@@ -106,11 +121,20 @@ def make_machine_handy(source):
     return res
 
 def make_expression(expr_stack, op_stack):
-    right = expr_stack.pop()
-    left = expr_stack.pop()
+    """
+
+    Make expression from expressions stack tail.
+    Swaps arguments for binary operators.
+
+    """
     op_class = op_stack.pop()[1]
-    expr_stack.push(op_class(left, right))
-    return expr_stack
+    if op_class.is_binary():
+        right = expr_stack.pop()
+        left = expr_stack.pop()
+        result = op_class(left, right)
+    else:
+        result = op_class(expr_stack.pop())
+    expr_stack.push(result)
 
 def handle_token(expr_stack, op_stack, token):
     cur_operator = ops_list.get(token)
@@ -118,13 +142,13 @@ def handle_token(expr_stack, op_stack, token):
         expr_stack.push(Number(token))
     elif token == ')':
         while op_stack.get()[1] != '(':
-            expr_stack = make_expression(expr_stack, op_stack)
+            make_expression(expr_stack, op_stack)
         op_stack.pop()
     elif token == '(' or op_stack.is_empty() or op_stack.get()[0] <= cur_operator[0]:
         op_stack.push(cur_operator)
     else:
         while (cur_operator[0] < op_stack.get()[0]):
-            expr_stack = make_expression(expr_stack, op_stack)
+            make_expression(expr_stack, op_stack)
         op_stack.push(cur_operator)
 
 def make_polish(source):
@@ -133,7 +157,7 @@ def make_polish(source):
     for token in source:
         handle_token(expr_stack, op_stack, token)
     while not op_stack.is_empty():
-        expr_stack = make_expression(expr_stack, op_stack)
+        make_expression(expr_stack, op_stack)
     return expr_stack.pop()
 
 if __name__ == '__main__':
