@@ -112,24 +112,26 @@ def make_expression(expr_stack, op_stack):
     expr_stack.push(op_class(left, right))
     return expr_stack
 
+def handle_token(expr_stack, op_stack, token):
+    cur_operator = ops_list.get(token)
+    if isinstance(token, int):
+        expr_stack.push(Number(token))
+    elif token == ')':
+        while op_stack.get()[1] != '(':
+            expr_stack = make_expression(expr_stack, op_stack)
+        op_stack.pop()
+    elif token == '(' or op_stack.is_empty() or op_stack.get()[0] <= cur_operator[0]:
+        op_stack.push(cur_operator)
+    else:
+        while (cur_operator[0] < op_stack.get()[0]):
+            expr_stack = make_expression(expr_stack, op_stack)
+        op_stack.push(cur_operator)
 
 def make_polish(source):
     op_stack = Stack()
     expr_stack = Stack()
     for token in source:
-        if isinstance(token, int):
-            expr_stack.push(Number(token))
-        elif token == ')':
-            while op_stack.get()[1] != '(':
-                expr_stack = make_expression(expr_stack, op_stack)
-            op_stack.pop()
-        elif token == '(' or op_stack.is_empty() or op_stack.get()[0] <= ops_list[token][0]:
-            op_stack.push(ops_list[token])
-        else:
-            cur_op = ops_list[token]
-            while (cur_op[0] < op_stack.get()[0]):
-                expr_stack = make_expression(expr_stack, op_stack)
-            op_stack.push(cur_op)
+        handle_token(expr_stack, op_stack, token)
     while not op_stack.is_empty():
         expr_stack = make_expression(expr_stack, op_stack)
     return expr_stack.pop()
