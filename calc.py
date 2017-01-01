@@ -89,6 +89,29 @@ class Log10(MathFunction):
     def interpret(self):
         return  math.log10(self.__argument__.interpret())
 
+class Cos(MathFunction):
+
+    def interpret(self):
+        return  math.cos(self.__argument__.interpret())
+
+class Sin(MathFunction):
+
+    def interpret(self):
+        return  math.sin(self.__argument__.interpret())
+
+
+class Acos(MathFunction):
+
+    def interpret(self):
+        return  math.acos(self.__argument__.interpret())
+
+
+class Asin(MathFunction):
+
+    def interpret(self):
+        return  math.asin(self.__argument__.interpret())
+
+
 class Stack():
 
     def __init__(self):
@@ -147,7 +170,12 @@ class TestCalc(unittest.TestCase):
         self.assertEqual(calc("log10(10^5)"), 5)
         self.assertEqual(calc("log(5)"), math.log(5))
 
+    def test_trigonometry(self):
+        self.assertEqual(calc("asin(sin(5)) + acos(cos(5))"), math.asin(math.sin(5)) + 
+            math.acos(math.cos(5)))
+
 ops_list = {'log':(5, Log), 'log10':(5, Log10), 'abs':(5, Absolute), 'inv':(5, Inverse), 'sqrt':(5, Sqrt),
+        'sin':(5, Sin), 'asin':(5, Asin), 'cos':(5, Cos), 'acos':(5, Acos),
         '^':(4, Power), 
         '*':(3, Mul), '/':(3, Divide), '//':(3, DivideModule), '%':(3, DivideCarry),
         '+':(2, Plus), '-':(2, Minus),
@@ -194,6 +222,10 @@ def make_machine_handy(source):
             (num, shift) = get_numb(source[i:])
             res.append(num)
             i += shift
+            continue
+        if (source[i] == 'e'):
+            res.append(math.e)
+            i += 1
             continue
         op_pos = i + find_operator(source[i:])
         if source[i:op_pos] == '--':
