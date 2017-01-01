@@ -44,6 +44,26 @@ class Minus(BinaryOperator):
     def interpret(self):
         return self.__left__.interpret() - self.__right__.interpret()
 
+class Divide(BinaryOperator):
+
+    def interpret(self):
+        return self.__left__.interpret() / self.__right__.interpret()
+
+class DivideCarry(BinaryOperator):
+
+    def interpret(self):
+        return self.__left__.interpret() % self.__right__.interpret()
+
+class DivideModule(BinaryOperator):
+
+    def interpret(self):
+        return self.__left__.interpret() // self.__right__.interpret()
+
+class Power(BinaryOperator):
+
+    def interpret(self):
+        return self.__left__.interpret() ** self.__right__.interpret()
+
 class Absolute(MathFunction):
 
     def interpret(self):
@@ -86,17 +106,21 @@ class TestCalc(unittest.TestCase):
     def test_not_explicit_floats(self):
         self.assertEqual(calc(".3+.4"), 0.7)
 
-ops_list = {'*':(3, Mul), '/':3, '//':3, '%':3,
-        '--':-1, '(':(0, '('), ')':(10, ')'),
-        'log':0, 'abs':(0, Absolute),
-        '+':(2, Plus), '-':(2, Minus),  '**':1}
+    def test_division(self):
+        self.assertEqual(calc("5 // 2 + 5 % 2 / 2"), 2.5)
+
+ops_list = {'log':5, 'abs':(5, Absolute),
+        '**':(4, Power), 
+        '*':(3, Mul), '/':(3, Divide), '//':(3, DivideModule), '%':(3, DivideCarry),
+        '+':(2, Plus), '-':(2, Minus),
+        '--':-1, '(':(0, '('), ')':(10, ')')}
 
 def get_numb(source):
     length = 0
     for i in source:
         if '0' <= i <= '9' or i == '.': 
             length += 1
-        else: 
+        else:
             break
     dummy = source[:length]
     if '.' in dummy:
@@ -171,10 +195,10 @@ def handle_token(expr_stack, op_stack, token):
         while op_stack.get()[1] != '(':
             make_expression(expr_stack, op_stack)
         op_stack.pop()
-    elif token == '(' or op_stack.is_empty() or op_stack.get()[0] <= cur_operator[0]:
+    elif token == '(' or op_stack.is_empty() or op_stack.get()[0] < cur_operator[0]:
         op_stack.push(cur_operator)
     else:
-        while (cur_operator[0] < op_stack.get()[0]):
+        while not op_stack.is_empty() and cur_operator[0] <= op_stack.get()[0]:
             make_expression(expr_stack, op_stack)
         op_stack.push(cur_operator)
 
