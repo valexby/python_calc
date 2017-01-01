@@ -95,6 +95,9 @@ class Atan2(BinaryOperator):
     def interpret(self):
         return  math.atan2(self.__argv__[0].interpret(), self.__argv__[1].interpret())
 
+class UnknownSyntaxException(Exception):
+    pass
+
 class Stack():
 
     def __init__(self):
