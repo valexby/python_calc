@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, pdb, unittest
+import sys, pdb, unittest, math
 
 class Number():
 
@@ -74,6 +74,11 @@ class Inverse(MathFunction):
     def interpret(self):
         return  0 - self.__argument__.interpret()
 
+class Sqrt(MathFunction):
+
+    def interpret(self):
+        return  math.sqrt(self.__argument__.interpret())
+
 class Stack():
 
     def __init__(self):
@@ -117,15 +122,19 @@ class TestCalc(unittest.TestCase):
             calc("5 / 0 + 4")
 
     def test_inversion(self):
-        self.assertEqual(calc("2 ** -1 + (-3 + 2)"), -0.5)
+        self.assertEqual(calc("2 ^ -1 + (-3 + 2)"), -0.5)
 
     def test_power(self):
-        self.assertEqual(calc("2 ** 2"), 4)
-        self.assertEqual(calc("2 ** -1"), 0.5)
-        self.assertEqual(calc("16 ** 0.25"), 2)
+        self.assertEqual(calc("2 ^ 2"), 4)
+        self.assertEqual(calc("2 ^ -1"), 0.5)
+        self.assertEqual(calc("16 ^ 0.25"), 2)
 
-ops_list = {'log':5, 'abs':(5, Absolute), 'inv':(5, Inverse),
-        '**':(4, Power), 
+    def test_sqrt(self):
+        self.assertEqual(calc("sqrt(4.5)"), math.sqrt(4.5))
+        self.assertEqual(calc("sqrt(4)"), 2)
+
+ops_list = {'log':5, 'abs':(5, Absolute), 'inv':(5, Inverse), 'sqrt':(5, Sqrt),
+        '^':(4, Power), 
         '*':(3, Mul), '/':(3, Divide), '//':(3, DivideModule), '%':(3, DivideCarry),
         '+':(2, Plus), '-':(2, Minus),
         '--':-1, '(':(0, '('), ')':(10, ')')}
@@ -145,7 +154,7 @@ def get_numb(source):
     return (num, length)
 
 def find_operator(source):
-    for i in range(3, 0, -1):
+    for i in range(4, 0, -1):
         if source[:i] in ops_list:
             return i
     return 1
@@ -221,7 +230,7 @@ def make_polish(source):
     expr_stack = Stack()
     for token in source:
         handle_token(expr_stack, op_stack, token)
-    while expr_stack.lenght() != 1:
+    while expr_stack.lenght() != 1 or not op_stack.is_empty():
         make_expression(expr_stack, op_stack)
     return expr_stack.pop()
 
