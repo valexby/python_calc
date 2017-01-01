@@ -87,6 +87,14 @@ class Hypot(BinaryOperator):
      def interpret(self):
         return  math.hypot(self.__argv__[0].interpret(), self.__argv__[1].interpret())
 
+class Atan(MathFunction):
+    def interpret(self):
+        return  math.atan(self.__argv__[0].interpret())
+
+class Atan2(BinaryOperator):
+    def interpret(self):
+        return  math.atan2(self.__argv__[0].interpret(), self.__argv__[1].interpret())
+
 class Stack():
 
     def __init__(self):
@@ -156,8 +164,13 @@ class TestCalc(unittest.TestCase):
     def test_hypot(self):
         self.assertEqual(calc("hypot(3, -1)"), math.hypot(3, -1))
 
+    def test_atan(self):
+        self.assertEqual(calc("atan(0.3)"), math.atan(0.3))
+        self.assertEqual(calc("atan2(4, 2)"), math.atan2(4, 2))
+
 ops_list = {'log':(5, Log), 'log10':(5, Log10), 'abs':(5, Absolute), 'inv':(5, Inverse), 'sqrt':(5, Sqrt),
         'sin':(5, Sin), 'asin':(5, Asin), 'cos':(5, Cos), 'acos':(5, Acos), 'hypot':(5, Hypot),
+        'atan':(5, Atan), 'atan2':(5, Atan2),
         '^':(4, Power), 
         '*':(3, Mul), '/':(3, Divide), '//':(3, DivideModule), '%':(3, DivideCarry),
         '+':(2, Plus), '-':(2, Minus),
