@@ -69,6 +69,11 @@ class Absolute(MathFunction):
     def interpret(self):
         return abs(self.__argument__.interpret())
 
+class Inverse(MathFunction):
+
+    def interpret(self):
+        return  0 - self.__argument__.interpret()
+
 class Stack():
 
     def __init__(self):
@@ -108,8 +113,18 @@ class TestCalc(unittest.TestCase):
 
     def test_division(self):
         self.assertEqual(calc("5 // 2 + 5 % 2 / 2"), 2.5)
+        with self.assertRaises(ZeroDivisionError):
+            calc("5 / 0 + 4")
 
-ops_list = {'log':5, 'abs':(5, Absolute),
+    def test_inversion(self):
+        self.assertEqual(calc("2 ** -1 + (-3 + 2)"), -0.5)
+
+    def test_power(self):
+        self.assertEqual(calc("2 ** 2"), 4)
+        self.assertEqual(calc("2 ** -1"), 0.5)
+        self.assertEqual(calc("16 ** 0.25"), 2)
+
+ops_list = {'log':5, 'abs':(5, Absolute), 'inv':(5, Inverse),
         '**':(4, Power), 
         '*':(3, Mul), '/':(3, Divide), '//':(3, DivideModule), '%':(3, DivideCarry),
         '+':(2, Plus), '-':(2, Minus),
@@ -141,7 +156,7 @@ def delete_spaces(source):
 def make_machine_handy(source):
     """
 
-    Split string math expression. Substitude negatives like '-3' on '(0 - 3)'.
+    Split string math expression.
 
     """
     i = 0
@@ -149,8 +164,7 @@ def make_machine_handy(source):
     source = delete_spaces(source)
     while (i < len(source)):
         if source[i] == '-' and (len(res) == 0 or (res[-1] != ')' and not isinstance(res[-1], (int, float)))):
-            # Make negatives machine-like: from '-3' to '(0 - 3)'.
-            res.extend([0, source[i]])
+            res.append('inv')
             i += 1
             continue
         if ('0' <= source[i] <= '9' or source[i] == '.'):
