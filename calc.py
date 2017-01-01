@@ -83,6 +83,9 @@ class Asin(MathFunction):
     def interpret(self):
         return  math.asin(self.__argv__[0].interpret())
 
+class Hypot(BinaryOperator):
+     def interpret(self):
+        return  math.hypot(self.__argv__[0].interpret(), self.__argv__[1].interpret())
 
 class Stack():
 
@@ -150,8 +153,11 @@ class TestCalc(unittest.TestCase):
         self.assertEqual(calc("asin(sin(5)) + acos(cos(5))"), math.asin(math.sin(5)) + 
             math.acos(math.cos(5)))
 
+    def test_hypot(self):
+        self.assertEqual(calc("hypot(3, -1)"), math.hypot(3, -1))
+
 ops_list = {'log':(5, Log), 'log10':(5, Log10), 'abs':(5, Absolute), 'inv':(5, Inverse), 'sqrt':(5, Sqrt),
-        'sin':(5, Sin), 'asin':(5, Asin), 'cos':(5, Cos), 'acos':(5, Acos),
+        'sin':(5, Sin), 'asin':(5, Asin), 'cos':(5, Cos), 'acos':(5, Acos), 'hypot':(5, Hypot),
         '^':(4, Power), 
         '*':(3, Mul), '/':(3, Divide), '//':(3, DivideModule), '%':(3, DivideCarry),
         '+':(2, Plus), '-':(2, Minus),
@@ -190,7 +196,7 @@ def make_machine_handy(source):
     res = []
     source = delete_spaces(source)
     while (i < len(source)):
-        if source[i] == '-' and (len(res) == 0 or (res[-1] != ')' and not isinstance(res[-1], (int, float)))):
+        if source[i] == '-' and (len(res) == 0 or source[i-1] == ',' or (res[-1] != ')' and not isinstance(res[-1], (int, float)))):
             res.append('inv')
             i += 1
             continue
@@ -206,8 +212,10 @@ def make_machine_handy(source):
         op_pos = i + find_operator(source[i:])
         if source[i:op_pos] == '--':
             res.append('+')
-        else:
+        elif ops_list.get(source[i:op_pos]) != None:
             res.append(source[i:op_pos])
+        elif source[i:op_pos] != ',':
+            raise UnknownSyntaxException()
         i = op_pos
     return res
 
