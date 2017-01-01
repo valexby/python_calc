@@ -11,105 +11,77 @@ class Number():
         return self.__number__
 
 class MathFunction():
+    argc = 1
+    def __init__(self, argv):
+        self.__argv__ = argv
 
-    def __init__(self, argument):
-        self.__argument__ = argument
-    
-    @staticmethod
-    def is_binary():
-        return False
-
-class BinaryOperator():
-
-    def __init__(self, left, right):
-        self.__left__ = left
-        self.__right__ = right
-
-    @staticmethod
-    def is_binary():
-        return True
+class BinaryOperator(MathFunction):
+    argc = 2
 
 class Plus(BinaryOperator):
-
     def interpret(self):
-        return self.__left__.interpret() + self.__right__.interpret()
+        return self.__argv__[0].interpret() + self.__argv__[1].interpret()
 
 class Mul(BinaryOperator):
-
     def interpret(self):
-        return self.__left__.interpret() * self.__right__.interpret()
+        return self.__argv__[0].interpret() * self.__argv__[1].interpret()
 
 class Minus(BinaryOperator):
-
     def interpret(self):
-        return self.__left__.interpret() - self.__right__.interpret()
+        return self.__argv__[0].interpret() - self.__argv__[1].interpret()
+
 
 class Divide(BinaryOperator):
-
     def interpret(self):
-        return self.__left__.interpret() / self.__right__.interpret()
+        return self.__argv__[0].interpret() / self.__argv__[1].interpret()
 
 class DivideCarry(BinaryOperator):
-
     def interpret(self):
-        return self.__left__.interpret() % self.__right__.interpret()
+        return self.__argv__[0].interpret() % self.__argv__[1].interpret()
 
 class DivideModule(BinaryOperator):
-
     def interpret(self):
-        return self.__left__.interpret() // self.__right__.interpret()
+        return self.__argv__[0].interpret() // self.__argv__[1].interpret()
 
 class Power(BinaryOperator):
-
     def interpret(self):
-        return self.__left__.interpret() ** self.__right__.interpret()
+        return self.__argv__[0].interpret() ** self.__argv__[1].interpret()
 
 class Absolute(MathFunction):
-
     def interpret(self):
-        return abs(self.__argument__.interpret())
+        return abs(self.__argv__[0].interpret())
 
 class Inverse(MathFunction):
-
     def interpret(self):
-        return  0 - self.__argument__.interpret()
+        return  0 - self.__argv__[0].interpret()
 
 class Sqrt(MathFunction):
-
     def interpret(self):
-        return  math.sqrt(self.__argument__.interpret())
+        return  math.sqrt(self.__argv__[0].interpret())
 
 class Log(MathFunction):
-
     def interpret(self):
-        return  math.log(self.__argument__.interpret())
+        return  math.log(self.__argv__[0].interpret())
 
 class Log10(MathFunction):
-
     def interpret(self):
-        return  math.log10(self.__argument__.interpret())
+        return  math.log10(self.__argv__[0].interpret())
 
 class Cos(MathFunction):
-
     def interpret(self):
-        return  math.cos(self.__argument__.interpret())
+        return  math.cos(self.__argv__[0].interpret())
 
 class Sin(MathFunction):
-
     def interpret(self):
-        return  math.sin(self.__argument__.interpret())
-
+        return  math.sin(self.__argv__[0].interpret())
 
 class Acos(MathFunction):
-
     def interpret(self):
-        return  math.acos(self.__argument__.interpret())
-
+        return  math.acos(self.__argv__[0].interpret())
 
 class Asin(MathFunction):
-
     def interpret(self):
-        return  math.asin(self.__argument__.interpret())
+        return  math.asin(self.__argv__[0].interpret())
 
 
 class Stack():
@@ -120,17 +92,21 @@ class Stack():
     def push(self, nooby):
         self.__data__.append(nooby)
 
-    def pop(self):
-        if len(self.__data__) == 0:
-            return None
-        head = self.__data__[-1]
-        self.__data__ = self.__data__[:-1]
-        return head
-
     def get(self):
         if len(self.__data__) == 0:
             return None
         return self.__data__[-1]
+
+    def pop(self, num = 0):
+        if len(self.__data__) < num:
+            return None
+        if num == 0:
+            out = self.__data__[-1]
+            num = 1
+        else:
+            out = self.__data__[-(num):]
+        self.__data__ = self.__data__[:-(num)]
+        return out
 
     def is_empty(self):
         return self.__data__ == []
@@ -248,12 +224,7 @@ def make_expression(expr_stack, op_stack):
         op_class = Mul
     else:
         op_class = op_stack.pop()[1]
-    if op_class.is_binary():
-        right = expr_stack.pop()
-        left = expr_stack.pop()
-        result = op_class(left, right)
-    else:
-        result = op_class(expr_stack.pop())
+    result = op_class(expr_stack.pop(op_class.argc))
     expr_stack.push(result)
 
 def handle_token(expr_stack, op_stack, token):
