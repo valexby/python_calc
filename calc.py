@@ -79,6 +79,16 @@ class Sqrt(MathFunction):
     def interpret(self):
         return  math.sqrt(self.__argument__.interpret())
 
+class Log(MathFunction):
+
+    def interpret(self):
+        return  math.log(self.__argument__.interpret())
+
+class Log10(MathFunction):
+
+    def interpret(self):
+        return  math.log10(self.__argument__.interpret())
+
 class Stack():
 
     def __init__(self):
@@ -133,7 +143,11 @@ class TestCalc(unittest.TestCase):
         self.assertEqual(calc("sqrt(4.5)"), math.sqrt(4.5))
         self.assertEqual(calc("sqrt(4)"), 2)
 
-ops_list = {'log':5, 'abs':(5, Absolute), 'inv':(5, Inverse), 'sqrt':(5, Sqrt),
+    def test_log(self):
+        self.assertEqual(calc("log10(10^5)"), 5)
+        self.assertEqual(calc("log(5)"), math.log(5))
+
+ops_list = {'log':(5, Log), 'log10':(5, Log10), 'abs':(5, Absolute), 'inv':(5, Inverse), 'sqrt':(5, Sqrt),
         '^':(4, Power), 
         '*':(3, Mul), '/':(3, Divide), '//':(3, DivideModule), '%':(3, DivideCarry),
         '+':(2, Plus), '-':(2, Minus),
@@ -154,7 +168,7 @@ def get_numb(source):
     return (num, length)
 
 def find_operator(source):
-    for i in range(4, 0, -1):
+    for i in range(5, 0, -1):
         if source[:i] in ops_list:
             return i
     return 1
