@@ -13,6 +13,8 @@ class Number():
 class MathFunction():
     argc = 1
     def __init__(self, argv):
+        if argv == None:
+            raise UnknownSyntaxException("Operator {} needs more arguments".format(type(self)))
         self.__argv__ = argv
 
 class BinaryOperator(MathFunction):
@@ -132,6 +134,7 @@ class TestCalc(unittest.TestCase):
 
     def test_not_explicit_multiply(self):
         self.assertEqual(calc("(3)(4)"), 12)
+        self.assertEqual(calc("3(2+2)"), 12)
 
     def test_floats(self):
         self.assertEqual(calc("0.3 + 4"), 4.3)
@@ -171,6 +174,11 @@ class TestCalc(unittest.TestCase):
         self.assertEqual(calc("atan(0.3)"), math.atan(0.3))
         self.assertEqual(calc("atan2(4, 2)"), math.atan2(4, 2))
 
+    def test_wrong_operation(self):
+        with self.assertRaises(UnknownSyntaxException):
+            calc("5 + 2 - ")
+            calc("5 + 3 = 8")
+
 ops_list = {'log':(5, Log), 'log10':(5, Log10), 'abs':(5, Absolute), 'inv':(5, Inverse), 'sqrt':(5, Sqrt),
         'sin':(5, Sin), 'asin':(5, Asin), 'cos':(5, Cos), 'acos':(5, Acos), 'hypot':(5, Hypot),
         'atan':(5, Atan), 'atan2':(5, Atan2),
@@ -205,7 +213,7 @@ def delete_spaces(source):
 def make_machine_handy(source):
     """
 
-    Split string math expression.
+    Splits string expression.
 
     """
     i = 0
@@ -231,7 +239,7 @@ def make_machine_handy(source):
         elif ops_list.get(source[i:op_pos]) != None:
             res.append(source[i:op_pos])
         elif source[i:op_pos] != ',':
-            raise UnknownSyntaxException()
+            raise UnknownSyntaxException("Unknown symbol on position {}".format(i))
         i = op_pos
     return res
 
