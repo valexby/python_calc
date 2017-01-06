@@ -133,8 +133,7 @@ class Stack():
 class TestCalc(unittest.TestCase):
 
     def test_not_explicit_multiply(self):
-        self.assertEqual(calc("(3)(4)"), 12)
-        self.assertEqual(calc("3(2+2)"), 12)
+        self.assertEqual(calc("3sin(3+1)2+(2)(3)+3(3+2)+(1+3)4"), 3*math.sin(3+1)*2+(2)*(3)+3*(3+2)+(1+3)*4)
 
     def test_floats(self):
         self.assertEqual(calc("0.3 + 4"), 4.3)
@@ -154,6 +153,7 @@ class TestCalc(unittest.TestCase):
         self.assertEqual(calc("2 ^ 2"), 4)
         self.assertEqual(calc("2 ^ -1"), 0.5)
         self.assertEqual(calc("16 ^ 0.25"), 2)
+        self.assertEqual(calc("-2 ^ -2"), -0.25)
 
     def test_sqrt(self):
         self.assertEqual(calc("sqrt(4.5)"), math.sqrt(4.5))
@@ -179,13 +179,28 @@ class TestCalc(unittest.TestCase):
             calc("5 + 2 - ")
             calc("5 + 3 = 8")
 
-ops_list = {'log':(5, Log), 'log10':(5, Log10), 'abs':(5, Absolute), 'inv':(5, Inverse), 'sqrt':(5, Sqrt),
-        'sin':(5, Sin), 'asin':(5, Asin), 'cos':(5, Cos), 'acos':(5, Acos), 'hypot':(5, Hypot),
-        'atan':(5, Atan), 'atan2':(5, Atan2),
-        '^':(4, Power), 
+ops_list = {'log':(6, Log), 'log10':(6, Log10), 'abs':(6, Absolute), 'sqrt':(6, Sqrt),
+        'sin':(6, Sin), 'asin':(6, Asin), 'cos':(6, Cos), 'acos':(6, Acos), 'hypot':(6, Hypot),
+        'atan':(6, Atan), 'atan2':(6, Atan2),
+        '^':(5, Power), 
+        'inv':(4, Inverse), 
         '*':(3, Mul), '/':(3, Divide), '//':(3, DivideModule), '%':(3, DivideCarry),
         '+':(2, Plus), '-':(2, Minus),
         '--':-1, '(':(0, '('), ')':(10, ')')}
+
+def fix_not_explicit_mul(source):
+    p = re.compile("((\d|\))(log10|log|abs|sqrt|sin|asin|cos|acos|hypot|atan2|atan|\())|(\)\d)")
+    start = 0
+    scan = p.scanner(source)
+    token = scan.search()
+    res = ""
+    while token != None:
+        end = token.start()
+        if (source[end-4:end+1] != 'atan2' and source[end-4:end+1] != 'log10'):
+            res += source[start:end+1] + '*';
+            start = end+1
+        token = scan.search()
+    return res + source[start:]
 
 def make_machine_handy(source):
     """
@@ -234,7 +249,7 @@ def handle_token(expr_stack, op_stack, token):
         while op_stack.get()[1] != '(':
             make_expression(expr_stack, op_stack)
         op_stack.pop()
-    elif token == '(' or op_stack.is_empty() or op_stack.get()[0] < cur_operator[0]:
+    elif token == '(' or op_stack.is_empty() or op_stack.get()[0] < cur_operator[0] or (token == 'inv' and op_stack.get()[1] == Power):
         op_stack.push(cur_operator)
     else:
         while not op_stack.is_empty() and cur_operator[0] <= op_stack.get()[0]:
@@ -250,8 +265,9 @@ def make_polish(source):
         make_expression(expr_stack, op_stack)
     return expr_stack.pop()
 
-def calc(soucre):
-    tokens = make_machine_handy(soucre)
+def calc(source):
+    fixed = fix_not_explicit_mul(source)
+    tokens = make_machine_handy(fixed)
     expression = make_polish(tokens)
     result = expression.interpret()
     return result
