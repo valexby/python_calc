@@ -232,12 +232,7 @@ def make_expression(expr_stack, op_stack):
     Swaps arguments for binary operators.
 
     """
-    if op_stack.is_empty():
-        # If we have two number without operand betwen them,  
-        # we should use multiply. Like (3+1)(4+2)  
-        op_class = Mul
-    else:
-        op_class = op_stack.pop()[1]
+    op_class = op_stack.pop()[1]
     result = op_class(expr_stack.pop(op_class.argc))
     expr_stack.push(result)
 
