@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, pdb, unittest, math
+import sys, pdb, unittest, math, re
 
 class Number():
 
@@ -187,61 +187,28 @@ ops_list = {'log':(5, Log), 'log10':(5, Log10), 'abs':(5, Absolute), 'inv':(5, I
         '+':(2, Plus), '-':(2, Minus),
         '--':-1, '(':(0, '('), ')':(10, ')')}
 
-def get_numb(source):
-    length = 0
-    for i in source:
-        if '0' <= i <= '9' or i == '.': 
-            length += 1
-        else:
-            break
-    dummy = source[:length]
-    if '.' in dummy:
-        num = float(dummy)
-    else:
-        num = int(dummy)
-    return (num, length)
-
-def find_operator(source):
-    for i in range(5, 0, -1):
-        if source[:i] in ops_list:
-            return i
-    return 1
-
-def delete_spaces(source):
-    return "".join(source.split(' '))
-    
 def make_machine_handy(source):
     """
 
     Splits string expression.
 
     """
-    i = 0
+    p = re.compile("(log10|log|abs|sqrt|sin|asin|cos|acos|hypot|atan2|atan|\^|\*|//|/|\%|\+|--|-|,|\(|\))|(\d*\.\d+)|(\d+)")
+    scan = p.scanner(source)
+    token = scan.search()
     res = []
-    source = delete_spaces(source)
-    while (i < len(source)):
-        if source[i] == '-' and (len(res) == 0 or source[i-1] == ',' or (res[-1] != ')' and not isinstance(res[-1], (int, float)))):
-            res.append('inv')
-            i += 1
-            continue
-        if ('0' <= source[i] <= '9' or source[i] == '.'):
-            (num, shift) = get_numb(source[i:])
-            res.append(num)
-            i += shift
-            continue
-        if (source[i] == 'e'):
-            res.append(math.e)
-            i += 1
-            continue
-        op_pos = i + find_operator(source[i:])
-        if source[i:op_pos] == '--':
-            res.append('+')
-        elif ops_list.get(source[i:op_pos]) != None:
-            res.append(source[i:op_pos])
-        elif source[i:op_pos] != ',':
-            raise UnknownSyntaxException("Unknown symbol on position {}".format(i))
-        i = op_pos
-    return res
+    while token != None:
+        if token.group(1) != None: # operator  
+            if token.group(1) == '-' and (len(res) == 0 or (res[-1] != ')' and not isinstance(res[-1], (int, float)))):
+                res.append('inv')
+            else:
+                res.append(token.group(1))
+        elif token.group(2) != None: # float  
+            res.append(float(token.group(2)))
+        else: # integer  
+            res.append(int(token.group(3)))
+        token = scan.search()
+    return [x for x in res if x != ',']
 
 def make_expression(expr_stack, op_stack):
     """
